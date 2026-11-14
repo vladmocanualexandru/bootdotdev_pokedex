@@ -1,5 +1,7 @@
+import { initState } from "./state.js";
+
 function main() {
-  console.log("Hello, world!");
+    initState();
 }
 
 main();
