@@ -20,9 +20,7 @@ describe.each([
   },
 ])("cleanInput($input)", ({ input, expected }) => {
   test(`Expected: ${expected}`, () => {
-
     const actual = cleanInput(input);
-    console.log(actual);
 
     expect(actual).toHaveLength(expected.length);
 
