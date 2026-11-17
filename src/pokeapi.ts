@@ -1,9 +1,25 @@
 import { z } from "zod";
 import { Cache } from "./pokecache.js";
 
+const PokemonStatSchema = z.object({
+  base_stat: z.number(),
+  stat: z.object({
+    name: z.string()
+  })
+});
+const PokemonTypeSchema = z.object({
+  type: z.object({
+    name: z.string()
+  })
+});
+
 const PokemonSchema = z.object({
   name: z.string(),
   base_experience: z.number(),
+  height: z.number(),
+  weight: z.number(),
+  stats: z.array(PokemonStatSchema),
+  types: z.array(PokemonTypeSchema)
 });
 
 const PokemonEncounterSchema = z.object({

@@ -6,7 +6,7 @@ import { commandExit } from "./command_exit.js";
 import { commandHelp } from "./command_help.js";
 import { commandMapNext, commandMapPrevious } from './command_map.js';
 import { commandExplore } from './command_explore.js';
-import { commandInfo } from './command_info.js';
+import { commandInspect } from './command_inspect.js';
 import { commandCatch } from './command_catch.js';
 import { PokeAPI } from './pokeapi.js';
 import { commandPokedex } from './command_pokedex.js';
@@ -49,10 +49,10 @@ export function getCommands(): Record<string, CLICommand> {
       description: "Displays available pokemons in the given location",
       callback: commandExplore,
     },
-    info: {
-      name: "info <pokemon>",
-      description: "Displays information about the given pokemon",
-      callback: commandInfo,
+    inspect: {
+      name: "inspect <pokemon>",
+      description: "Displays information the Pokedex entry for the given pokemon",
+      callback: commandInspect,
     },
     catch: {
       name: "catch <pokemon>",

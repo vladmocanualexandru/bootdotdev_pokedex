@@ -4,6 +4,7 @@ export async function commandPokedex(state: State) {
     if (Object.keys(state.pokedex).length === 0) {
         console.log("Your Pokedex is empty");
     } else {
+        console.log("Your Pokedex:");
         let totalXp = 0;
         for (const pokemonName in state.pokedex) {
             console.log(`- ${pokemonName} (${state.pokedex[pokemonName].base_experience} XP)`);
