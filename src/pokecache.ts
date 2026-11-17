@@ -44,8 +44,4 @@ export class Cache {
             this.#reapIntervalId = undefined;
         }
     }
-
-    getCache() {
-        return this.#cache;
-    }
 }

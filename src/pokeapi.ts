@@ -1,18 +1,20 @@
 import { z } from "zod";
 import { Cache } from "./pokecache.js";
 
-// const LocationSchema = z.object({
-//   id: z.number(),
-//   name: z.string(),
-//   region: z.object({
-//     name: z.string(),
-//     url: z.string(),
-//   }),
-// });
+const PokemonEncounterSchema = z.object({
+  pokemon: z.object({
+    name: z.string()
+  })
+})
+
+const LocationSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  pokemon_encounters: z.array(PokemonEncounterSchema),
+});
 
 const ShallowLocationSchema = z.object({
-  name: z.string(),
-  url: z.string(),
+  name: z.string()
 });
 
 const ShallowLocationsSchema = z.object({
@@ -22,12 +24,17 @@ const ShallowLocationsSchema = z.object({
   results: z.array(ShallowLocationSchema),
 });
 
-// export type Location = z.infer<typeof LocationSchema>;
+export type Location = z.infer<typeof LocationSchema>;
+export type PokemonEncounter = z.infer<typeof PokemonEncounterSchema>;
 export type ShallowLocation = z.infer<typeof ShallowLocationSchema>;
 export type ShallowLocations = z.infer<typeof ShallowLocationsSchema>;
 
+
 export class PokeAPI {
-  private static readonly baseURL = "https://pokeapi.co/api/v2";
+  private static readonly BASE_URL = "https://pokeapi.co/api/v2";
+  private static readonly ALL_LOCATION_AREAS_URL =`${PokeAPI.BASE_URL}/location-area`;
+  private static readonly LOCATION_AREA_URL =`${PokeAPI.BASE_URL}/location-area/{locationName}`;
+  public static readonly PAGE_SIZE = 20;
 
   requestCache: Cache;
 
@@ -35,33 +42,39 @@ export class PokeAPI {
       this.requestCache = new Cache(cacheRefreshMs);
   }
 
-  async fetchLocations(pageURL?: string | null): Promise<ShallowLocations> {
-    if (!pageURL) {
-        pageURL = `${PokeAPI.baseURL}/location-area`;
-    }
+  async fetchData(url: string, schema: z.ZodType): Promise<unknown> {
 
-      let cachedResponse = this.requestCache.get(pageURL);
+      let cachedResponse = this.requestCache.get(url);
+
       if (!cachedResponse) {
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // delay useful to test caching behavior
+        // await new Promise(resolve => setTimeout(resolve, 3000));
 
-        const response = await fetch(`${pageURL}`, { method: "GET" });
+        const response = await fetch(`${url}`, { method: "GET" });
         const responseData = await response.json();
-        cachedResponse = ShallowLocationsSchema.parse(responseData) as ShallowLocations;
+        cachedResponse = schema.parse(responseData);
 
-        this.requestCache.add(pageURL, cachedResponse);
+        this.requestCache.add(url, cachedResponse);
       }
 
-      return cachedResponse as ShallowLocations;
+      return cachedResponse;
   }
 
-    closeCache() {
+  closeCache() {
         this.requestCache.stopReapLoop();
   }
 
-  // async fetchLocation(locationName: string): Promise<Location> {
-  //     const response = await fetch(`${PokeAPI.baseURL}/location/${locationName}`, { method: "GET" });
-  //     const responseData = await response.json();
+  async fetchLocations(pageURL?: string | null): Promise<ShallowLocations> {
+    if (!pageURL) {
+        pageURL = PokeAPI.ALL_LOCATION_AREAS_URL;
+    }
 
-  //     return LocationSchema.parse(responseData) as Location;
-  // }
+    const data = await this.fetchData(pageURL, ShallowLocationsSchema);
+    return data as ShallowLocations;
+  }
+
+  async fetchLocation(locationName: string): Promise<Location> {
+      const data = await this.fetchData(PokeAPI.LOCATION_AREA_URL.replace("{locationName}", locationName), LocationSchema);
+      return LocationSchema.parse(data) as Location;
+  }
 }

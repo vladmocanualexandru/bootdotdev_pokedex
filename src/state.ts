@@ -3,13 +3,14 @@ import { stdin, stdout } from 'node:process';
 import { cleanInput } from './repl.js';
 import { commandExit } from "./command_exit.js";
 import { commandHelp } from "./command_help.js";
-import { commandMap, commandMapPrevious } from './command_map.js';
+import { commandMapNext, commandMapPrevious } from './command_map.js';
+import { commandExplore } from './command_explore.js';
 import { PokeAPI } from './pokeapi.js';
 
 export type CLICommand = {
   name: string;
   description: string;
-  callback: (state: State) => Promise<void>;
+  callback: (state: State, ...args: string[]) => Promise<void>;
 };
 
 export type State = {
@@ -17,16 +18,12 @@ export type State = {
     commands: Record<string, CLICommand>;
     pokeApi: PokeAPI,
     nextLocationURL: string | null,
-    prevLocationURL: string | null;
+    prevLocationURL: string | null,
+    pageNumber: number,
 };
 
 export function getCommands(): Record<string, CLICommand> {
   return {
-    exit: {
-      name: "exit",
-      description: "Exit the Pokedex",
-      callback: commandExit,
-    },
     help: {
       name: "help",
       description: "Displays this help",
@@ -35,14 +32,23 @@ export function getCommands(): Record<string, CLICommand> {
     map: {
       name: "map",
       description: "Displays next page of available locations (first call brings first page)",
-      callback: commandMap,
+      callback: commandMapNext,
       },
     mapb: {
       name: "mapb",
       description: "Displays previous page of available locations",
       callback: commandMapPrevious,
     },
-    // can add more commands here
+    explore: {
+      name: "explore <location>",
+      description: "Displays available pokemons in the given location",
+      callback: commandExplore,
+    },
+    exit: {
+      name: "exit",
+      description: "Exit the Pokedex",
+      callback: commandExit,
+    },
   };
 }
 
@@ -54,14 +60,15 @@ export function initState(): State {
     prompt: "Pokedex > "
   });
 
-  const pokeApi = new PokeAPI(30000);
+  const pokeApi = new PokeAPI(300000);
 
   const state = {
     rl: rl,
     commands: getCommands(),
     pokeApi: pokeApi,
     nextLocationURL: null,
-    prevLocationURL: null
+    prevLocationURL: null,
+    pageNumber: 0,
   };
 
   rl.on('line', async (line) => {
@@ -72,28 +79,25 @@ export function initState(): State {
 
           const commands = getCommands();
 
+          console.log("");
           if (!commands.hasOwnProperty(command)) {
-              console.log("Unknown command");
+              console.log("Unknown command (type 'help' for commands)");
           } else {
               try {
-                await commands[command].callback(state);
-                console.log("\n");
+                await commands[command].callback(state, ...words.slice(1));
               } catch (error) {
-                  console.log(`Error while executing command ${command}: ${error}`);
+                console.log(`Error while executing command ${command}: ${error}`);
               }
+            }
+
+          console.log("");
           }
-      }
 
       rl.prompt();
   });
 
   rl.prompt();
 
-  return {
-    rl: rl,
-    pokeApi: pokeApi,
-    commands: getCommands(),
-    nextLocationURL: null,
-    prevLocationURL: null
-  };
+  state.rl = rl;
+  return state;
 }
