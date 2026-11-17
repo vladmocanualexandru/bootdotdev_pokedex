@@ -1,11 +1,15 @@
 import { createInterface, type Interface } from 'node:readline';
+import type { Pokemon } from './pokeapi.js'
 import { stdin, stdout } from 'node:process';
 import { cleanInput } from './repl.js';
 import { commandExit } from "./command_exit.js";
 import { commandHelp } from "./command_help.js";
 import { commandMapNext, commandMapPrevious } from './command_map.js';
 import { commandExplore } from './command_explore.js';
+import { commandInfo } from './command_info.js';
+import { commandCatch } from './command_catch.js';
 import { PokeAPI } from './pokeapi.js';
+import { commandPokedex } from './command_pokedex.js';
 
 export type CLICommand = {
   name: string;
@@ -20,6 +24,7 @@ export type State = {
     nextLocationURL: string | null,
     prevLocationURL: string | null,
     pageNumber: number,
+    pokedex: Record<string, Pokemon>,
 };
 
 export function getCommands(): Record<string, CLICommand> {
@@ -43,6 +48,21 @@ export function getCommands(): Record<string, CLICommand> {
       name: "explore <location>",
       description: "Displays available pokemons in the given location",
       callback: commandExplore,
+    },
+    info: {
+      name: "info <pokemon>",
+      description: "Displays information about the given pokemon",
+      callback: commandInfo,
+    },
+    catch: {
+      name: "catch <pokemon>",
+      description: "Attempts to catch the given pokemon",
+      callback: commandCatch,
+    },
+    pokedex: {
+      name: "pokedex",
+      description: "Displays your Pokedex",
+      callback: commandPokedex,
     },
     exit: {
       name: "exit",
@@ -69,6 +89,7 @@ export function initState(): State {
     nextLocationURL: null,
     prevLocationURL: null,
     pageNumber: 0,
+    pokedex: {},
   };
 
   rl.on('line', async (line) => {

@@ -1,6 +1,11 @@
 import { z } from "zod";
 import { Cache } from "./pokecache.js";
 
+const PokemonSchema = z.object({
+  name: z.string(),
+  base_experience: z.number(),
+});
+
 const PokemonEncounterSchema = z.object({
   pokemon: z.object({
     name: z.string()
@@ -25,6 +30,7 @@ const ShallowLocationsSchema = z.object({
 });
 
 export type Location = z.infer<typeof LocationSchema>;
+export type Pokemon = z.infer<typeof PokemonSchema>;
 export type PokemonEncounter = z.infer<typeof PokemonEncounterSchema>;
 export type ShallowLocation = z.infer<typeof ShallowLocationSchema>;
 export type ShallowLocations = z.infer<typeof ShallowLocationsSchema>;
@@ -34,6 +40,7 @@ export class PokeAPI {
   private static readonly BASE_URL = "https://pokeapi.co/api/v2";
   private static readonly ALL_LOCATION_AREAS_URL =`${PokeAPI.BASE_URL}/location-area`;
   private static readonly LOCATION_AREA_URL =`${PokeAPI.BASE_URL}/location-area/{locationName}`;
+  private static readonly POKEMON_INFO_URL =`${PokeAPI.BASE_URL}/pokemon/{pokemonName}`;
   public static readonly PAGE_SIZE = 20;
 
   requestCache: Cache;
@@ -76,5 +83,10 @@ export class PokeAPI {
   async fetchLocation(locationName: string): Promise<Location> {
       const data = await this.fetchData(PokeAPI.LOCATION_AREA_URL.replace("{locationName}", locationName), LocationSchema);
       return LocationSchema.parse(data) as Location;
+  }
+
+  async fetchPokemon(pokemonName: string): Promise<Pokemon> {
+      const data = await this.fetchData(PokeAPI.POKEMON_INFO_URL.replace("{pokemonName}", pokemonName), PokemonSchema);
+      return PokemonSchema.parse(data) as Pokemon;
   }
 }
